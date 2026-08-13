@@ -1,0 +1,37 @@
+name: Dump kType map (research export)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installer wrangler
+        run: npm install -g wrangler
+      - name: Dump ktype → eurocode fra glass-catalog-db
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -e
+          echo "== COUNT glass_catalog med ktype =="
+          wrangler d1 execute glass-catalog-db --remote \
+            --command "SELECT COUNT(*) AS n FROM glass_catalog WHERE ktype IS NOT NULL;" --json > count.json
+          cat count.json
+          echo "== Dump (eurocode, ktype) =="
+          wrangler d1 execute glass-catalog-db --remote \
+            --command "SELECT eurocode, ktype FROM glass_catalog WHERE ktype IS NOT NULL;" --json > ktype-map.json
+          jq -c '.[0].results' ktype-map.json > ktype-rows.json
+          mv ktype-rows.json ktype-map.json
+          wc -c ktype-map.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ktype-map
+          path: |
+            ktype-map.json
+            count.json

@@ -1,0 +1,10 @@
+# Arch miljøer — autoglassgrossisten
+environments:
+  local:
+    url: http://localhost:3000
+    secrets_store: .env.local
+  prod:
+    url: https://auto-glass.no
+    worker: autoglass-glass-sok
+    d1: glass-catalog-db
+    pages: autoglass-frontend

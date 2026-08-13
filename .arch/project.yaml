@@ -1,0 +1,18 @@
+# Arch — autoglassgrossisten
+# Control Plane for Autoglass Grossisten (B2B-grossist portal + AI-ordremottaker)
+# Onboardet 2026-08-14 via Arch Project Factory (analyze → proposal → godkjenning → init)
+
+project:
+  name: autoglassgrossisten
+  owner: arch
+  type: B2B-grossist portal + AI-ordremottaker
+  repository: tajlive/autoglassgrossisten
+  linear_team: ARC
+  linear_project: Autoglass
+  runtime: cloudflare-pages
+  environment: production
+  visibility: customer
+  health_profile: customer
+  status: live
+  url: https://auto-glass.no
+  customer: Autoglass AS (eduard@auto-glass.no)

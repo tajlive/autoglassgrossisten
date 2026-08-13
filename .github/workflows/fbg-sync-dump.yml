@@ -37,17 +37,6 @@ jobs:
           cat /tmp/prisliste.json | jq -c '.[0].results[]' > /tmp/prisliste.rows.jsonl
           echo "prisliste rows: $(wc -l < /tmp/prisliste.rows.jsonl)"
 
-      - name: Dump ktype_matches
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          wrangler d1 execute glass-catalog-db --remote \
-            --command "SELECT ktype, eurocode, count FROM ktype_matches;" \
-            --json > /tmp/ktype_matches.json 2>/dev/null || echo '{"result":[{"results":[]}]}' > /tmp/ktype_matches.json
-          cat /tmp/ktype_matches.json | jq -c '.[0].results[] // empty' > /tmp/ktype_matches.rows.jsonl
-          echo "ktype_matches rows: $(wc -l < /tmp/ktype_matches.rows.jsonl)"
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -55,5 +44,4 @@ jobs:
           path: |
             /tmp/glass_catalog.rows.jsonl
             /tmp/prisliste.rows.jsonl
-            /tmp/ktype_matches.rows.jsonl
           retention-days: 7

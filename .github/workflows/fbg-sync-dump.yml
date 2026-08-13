@@ -1,0 +1,59 @@
+name: FBG sync dump (B2B → FinnBilGlass)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 4 * * 0"  # Søndag 06:30 CET (etter Sync Catalog to D1)
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install -g wrangler
+
+      - name: Dump glass_catalog
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler d1 execute glass-catalog-db --remote \
+            --command "SELECT eurocode, brand, model, year_from, year_to, category, rain_sensor, antenna, hud, camera, adas, description, ktype FROM glass_catalog;" \
+            --json > /tmp/glass_catalog.json
+          cat /tmp/glass_catalog.json | jq -c '.[0].results' > /tmp/glass_catalog.rows.jsonl
+          echo "glass_catalog rows: $(wc -l < /tmp/glass_catalog.rows.jsonl)"
+
+      - name: Dump autoglass_prisliste
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler d1 execute glass-catalog-db --remote \
+            --command "SELECT varenr, varenavn, pris, eurokode, rad_type FROM autoglass_prisliste;" \
+            --json > /tmp/prisliste.json
+          cat /tmp/prisliste.json | jq -c '.[0].results' > /tmp/prisliste.rows.jsonl
+          echo "prisliste rows: $(wc -l < /tmp/prisliste.rows.jsonl)"
+
+      - name: Dump ktype_matches
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler d1 execute glass-catalog-db --remote \
+            --command "SELECT ktype, eurocode, count FROM ktype_matches;" \
+            --json > /tmp/ktype_matches.json 2>/dev/null || echo '{"result":[{"results":[]}]}' > /tmp/ktype_matches.json
+          cat /tmp/ktype_matches.json | jq -c '.[0].results // empty' > /tmp/ktype_matches.rows.jsonl
+          echo "ktype_matches rows: $(wc -l < /tmp/ktype_matches.rows.jsonl)"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: b2b-catalog-sync
+          path: |
+            /tmp/glass_catalog.rows.jsonl
+            /tmp/prisliste.rows.jsonl
+            /tmp/ktype_matches.rows.jsonl
+          retention-days: 7

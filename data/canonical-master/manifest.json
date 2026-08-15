@@ -1,0 +1,24 @@
+{
+  "schema": "finnbilglass-canonical-master/v1",
+  "target": "autoglassgrossisten-b2b/glass-catalog-db",
+  "source_db": "finnbilglass-db-staging",
+  "source_ids": [
+    "glavista",
+    "pilfin2017",
+    "pilkington",
+    "pilkington-irl"
+  ],
+  "license_refs": [
+    "internal-autoglass"
+  ],
+  "raw_fingerprint": "sha256:7bd1820d9b6ca998792f0bb8c5c4f6193bb77a22a31c322e11348c28ef0c495e",
+  "exported_at": "2026-08-15T20:22:10.938Z",
+  "counts": {
+    "source_katalog": 4,
+    "glass_master": 32091,
+    "glass_identifiers": 63799,
+    "glass_features": 288819,
+    "glass_vehicle_links": 30976
+  },
+  "notes": "Systemnøytralt, idempotent snapshot. Pris/lager/ordre er IKKE inkludert — B2B beholder egen autoritet."
+}

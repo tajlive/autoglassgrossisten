@@ -978,6 +978,10 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
       // We have accumulated answers from previous turns (LLM dialogue in progress)
       // Continue with LLM even if candidates filtered to 0 — LLM can explain no matches
       useLlmDialogue = true;
+    } else if (imageContext) {
+      // Bilde fra kunden (43R-merke/kjennemerke) er FYSISK BEVIS — LLM må svare med
+      // imageContext i prompten (bekrefte glasset/bilen), selv uten kandidater ennå.
+      useLlmDialogue = true;
     }
 
     if (useLlmDialogue) {

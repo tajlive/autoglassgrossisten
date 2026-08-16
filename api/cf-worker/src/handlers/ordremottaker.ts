@@ -8,6 +8,7 @@ import { jsonResponse, errorResponse } from '../lib/cors';
 import { extractVehicleHybrid, extractEquipment } from '../lib/ordremottaker-ner';
 import { generateDialogue, buildCartUrl } from '../lib/ordremottaker-llm';
 import { createSession, getSession, updateSession, addMessage } from '../lib/ordremottaker-session';
+import { lesBildeKontekst, slåOppR43, slåOppSkilt } from '../lib/ordremottaker-vision';
 import { searchByRegnr } from './search';
 import { queryByBrandAndYear, queryByBrandOnly, queryByEurocode } from '../lib/db';
 import { normalizeRecord } from '../lib/normalize';
@@ -426,6 +427,51 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
 
     // 2. Add user message
     await addMessage(env, sessionToken, 'user', body.message);
+
+    // 2b. Bilde-støtte: foto av 43R-merke eller kjennemerke → fysisk bevis → LLM-kontekst.
+    //     Bildet lagres ALDRI — kun det utleste nummeret (samme GDPR-mønster som FinnBilGlass).
+    let imageContext: string | null = null;
+    if (body.image) {
+      if (typeof body.image !== 'string' || body.image.length > 7_000_000 || !body.image.startsWith('data:image/')) {
+        return errorResponse('image må være dataURL (data:image/jpeg|png|webp;base64,...), maks ~7 MB', 400);
+      }
+      try {
+        const lest = await lesBildeKontekst(env.AI, body.image);
+        const deler: string[] = [];
+        if (lest.r43) {
+          const treff = await slåOppR43(env, lest.r43);
+          if (treff && treff.length > 0) {
+            const forste = treff[0];
+            const navn = forste.varenavn ? ` (${forste.varenavn})` : '';
+            const pris = forste.pris ? `, pris ${forste.pris} kr` : '';
+            deler.push(
+              `43R-${lest.r43} = ${forste.merke ?? '?'} ${forste.modell ?? ''}${forste.kategori ? `, ${forste.kategori}` : ''}${navn}${pris}, eurokode ${forste.eurokode}`
+            );
+            // Ett bekreftet treff = glasset er identifisert — sett som kandidat-fundament.
+            if (forste.bekreftet === 1) {
+              imageContext = `Kunden sendte bilde av 43R-merket: 43R-${lest.r43} → ${forste.merke ?? '?'} ${forste.modell ?? ''} (${forste.eurokode}). Glasset er VERIFISERT (fysisk merke på glasset).`;
+            } else {
+              imageContext = `Kunden sendte bilde av 43R-merket: 43R-${lest.r43} → ${deler.join('; ')}.`;
+            }
+          } else {
+            imageContext = `Kunden sendte bilde av et 43R-merke (43R-${lest.r43}), men nummeret er ikke i mappingen vår ennå. Be kunden bekrefte glassets varenummer/eurokode, eller identifiser via bil+utstyr.`;
+          }
+        } else if (lest.skilt) {
+          const bil = await slåOppSkilt(env, lest.skilt);
+          if (bil) {
+            imageContext = `Kunden sendte bilde av kjennemerket: ${lest.skilt} = ${bil.merke} ${bil.modell}${bil.aar ? ` (${bil.aar})` : ''}${bil.vin ? `, VIN ${bil.vin}` : ''}.`;
+          } else {
+            imageContext = `Kunden sendte bilde av kjennemerket ${lest.skilt}, men SVV-oppslaget ga ingen bil (kan være avregistrert). Spør om biltype manuelt.`;
+          }
+        } else {
+          imageContext = `Kunden sendte et bilde, men vi klarte ikke å lese verken 43R-merke eller kjennemerke (${lest.raatekst.slice(0, 80)}). Spør kunden om varenummer/eurokode eller biltype.`;
+        }
+        await addMessage(env, sessionToken, 'user', `[BILDE] ${imageContext}`);
+      } catch (e) {
+        console.error('Bilde-lesing feilet:', e);
+        imageContext = 'Kunden sendte et bilde, men det kunne ikke leses. Spør om glassets nummer/eurokode.';
+      }
+    }
 
     // 3. State variables
     let candidates: Candidate[] = [];
@@ -954,6 +1000,7 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
         extracted: equipmentAnswers,
         vehicle: vehicleInfo || null,
         ktypeFamily: ktypeFamilyInfo || undefined,
+        imageContext,
       });
 
       if (dialogueResult) {

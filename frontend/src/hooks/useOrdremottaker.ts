@@ -22,8 +22,8 @@ export function useOrdremottaker() {
   const [equipmentAnswers, setEquipmentAnswers] = useState<Record<string, string>>({});
 
   const mutation = useMutation({
-    mutationFn: async ({ message, customerId }: { message: string; customerId?: number }) => {
-      const response = await sendMessage(message, sessionToken || undefined, customerId);
+    mutationFn: async ({ message, customerId, image }: { message: string; customerId?: number; image?: string }) => {
+      const response = await sendMessage(message, sessionToken || undefined, customerId, image);
       if (response.session_token) setSessionToken(response.session_token);
       return response;
     },
@@ -65,17 +65,17 @@ export function useOrdremottaker() {
   );
 
   const sendUserMessage = useCallback(
-    (text: string, customerId?: number) => {
+    (text: string, customerId?: number, image?: string) => {
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: 'user',
-          content: text,
+          content: image ? `${text || '📷'}` : text,
           timestamp: Date.now(),
         },
       ]);
-      mutation.mutate({ message: text, customerId });
+      mutation.mutate({ message: text, customerId, image });
     },
     [mutation]
   );

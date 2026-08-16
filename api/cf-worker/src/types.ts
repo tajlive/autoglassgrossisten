@@ -267,6 +267,8 @@ export interface OrdremottakerRequest {
   customer_id?: number;
   channel?: "chat" | "email" | "phone";
   language?: "no" | "sv" | "da" | "en";
+  /** Foto fra kunden (dataURL, maks ~7 MB): 43R-merke på glasset eller kjennemerke. */
+  image?: string;
 }
 
 export interface AccessoryItem {

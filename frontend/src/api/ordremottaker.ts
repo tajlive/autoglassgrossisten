@@ -129,7 +129,8 @@ export interface FeedbackPayload {
 export async function sendMessage(
   message: string,
   sessionToken?: string,
-  customerId?: number
+  customerId?: number,
+  image?: string
 ): Promise<OrdremottakerResponse> {
   const res = await fetch(`${API_BASE}/api/ordremottaker`, {
     method: 'POST',
@@ -140,6 +141,7 @@ export async function sendMessage(
       customer_id: customerId,
       channel: 'chat',
       language: 'no',
+      image,
     }),
   });
 

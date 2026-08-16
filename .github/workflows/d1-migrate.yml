@@ -39,6 +39,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Seed ECE R43-testdata (idempotent)
+        working-directory: api/cf-worker
+        run: |
+          wrangler d1 execute glass-catalog-db --remote --command "INSERT OR IGNORE INTO ece_r43 (r43_nummer, landkode, eurokode, varenr, kategori, merke, modell, kilde, bekreftet) VALUES ('004592', 'E1', '8579AGSGYAVZ1B', '8579AGSGYAVZ1B', 'frontrute', 'VW', 'TRANSPORTER T5 2003-', 'manual', 1)"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Verify
         working-directory: api/cf-worker
         run: |

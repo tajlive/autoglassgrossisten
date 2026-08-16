@@ -97,7 +97,7 @@ export class WorkersAIVisionProvider implements VisionProvider {
     const { image } = request;
     let rawText = '';
     try {
-      const out = await this.ai.run(WORKERS_AI_VISION_MODEL, {
+      const utforKall = async () => this.ai.run(WORKERS_AI_VISION_MODEL, {
         messages: [
           {
             role: 'user',
@@ -108,6 +108,19 @@ export class WorkersAIVisionProvider implements VisionProvider {
           },
         ],
       });
+      let out: unknown;
+      try {
+        out = await utforKall();
+      } catch (e) {
+        const feil = e instanceof Error ? e.message : String(e);
+        if (feil.includes('5016') || /agree/i.test(feil)) {
+          // Community License (Meta) ikke akseptert på kontoen — aksepter automatisk, så prøv igjen.
+          await this.ai.run(WORKERS_AI_VISION_MODEL, { messages: [{ role: 'user', content: 'agree' }] });
+          out = await utforKall();
+        } else {
+          throw e;
+        }
+      }
       rawText = typeof out === 'string' ? out : JSON.stringify(out);
     } catch (e) {
       return {

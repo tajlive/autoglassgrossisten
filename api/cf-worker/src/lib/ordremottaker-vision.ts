@@ -58,10 +58,12 @@ export function normaliserSkilt(raw: string): string | null {
   return m ? m[0].toUpperCase().replace(/[\s\-–—]/g, '') : null;
 }
 
-/** Les 43R + skilt fra et bilde (dataURL). Returnerer alltid en kontekst. */
+/** Les 43R + skilt fra et bilde (dataURL). Returnerer alltid en kontekst.
+ *  Ved feil 5016 (Community License ikke akseptert) sendes 'agree' automatisk
+ *  — Workers AI aksepterer lisensen per konto ved dette kallet, så prøver vi igjen. */
 export async function lesBildeKontekst(ai: Ai, imageDataUrl: string): Promise<BildeKontekst> {
-  try {
-    const out = (await ai.run(ORDREMOTTAKER_VISION_MODEL, {
+  const kall = async (): Promise<{ response?: string } | string> => {
+    return (await ai.run(ORDREMOTTAKER_VISION_MODEL, {
       messages: [
         {
           role: 'user',
@@ -72,17 +74,35 @@ export async function lesBildeKontekst(ai: Ai, imageDataUrl: string): Promise<Bi
         },
       ],
     })) as { response?: string } | string;
-    const raatekst = typeof out === 'string' ? out : (out?.response ?? '');
-    return {
-      r43: normaliserR43Loose(raatekst),
-      skilt: normaliserSkilt(raatekst),
-      raatekst,
-    };
+  };
+
+  let out: { response?: string } | string;
+  try {
+    out = await kall();
   } catch (e) {
     const feil = e instanceof Error ? e.message : String(e);
-    console.error('lesBildeKontekst feilet:', feil);
-    return { r43: null, skilt: null, raatekst: '', feil };
+    if (feil.includes('5016') || /agree/i.test(feil)) {
+      try {
+        // Aksepter Community License (per-konto, en gang).
+        await ai.run(ORDREMOTTAKER_VISION_MODEL, { messages: [{ role: 'user', content: 'agree' }] });
+        out = await kall();
+      } catch (e2) {
+        const feil2 = e2 instanceof Error ? e2.message : String(e2);
+        console.error('lesBildeKontekst: lisens-aksept/retry feilet:', feil2);
+        return { r43: null, skilt: null, raatekst: '', feil: feil2 };
+      }
+    } else {
+      console.error('lesBildeKontekst feilet:', feil);
+      return { r43: null, skilt: null, raatekst: '', feil };
+    }
   }
+
+  const raatekst = typeof out === 'string' ? out : (out?.response ?? '');
+  return {
+    r43: normaliserR43Loose(raatekst),
+    skilt: normaliserSkilt(raatekst),
+    raatekst,
+  };
 }
 
 export interface R43GlassTreff {

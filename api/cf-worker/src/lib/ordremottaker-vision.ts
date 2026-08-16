@@ -19,6 +19,8 @@ export interface BildeKontekst {
   r43: string | null;    // normalisert (kun sifrene, f.eks. '004592')
   skilt: string | null;  // normalisert (f.eks. 'SU18018')
   raatekst: string;
+  /** Feilmelding fra ai.run hvis kallet feiler (debug). */
+  feil?: string;
 }
 
 /** AI-prompt: be om BÅDE 43R-nummer og kjennemerke (én avlesning per bilde). */
@@ -77,8 +79,9 @@ export async function lesBildeKontekst(ai: Ai, imageDataUrl: string): Promise<Bi
       raatekst,
     };
   } catch (e) {
-    console.error('lesBildeKontekst feilet:', e);
-    return { r43: null, skilt: null, raatekst: '' };
+    const feil = e instanceof Error ? e.message : String(e);
+    console.error('lesBildeKontekst feilet:', feil);
+    return { r43: null, skilt: null, raatekst: '', feil };
   }
 }
 

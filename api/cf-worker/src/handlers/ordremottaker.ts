@@ -464,7 +464,7 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
             imageContext = `Kunden sendte bilde av kjennemerket ${lest.skilt}, men SVV-oppslaget ga ingen bil (kan være avregistrert). Spør om biltype manuelt.`;
           }
         } else {
-          imageContext = `Kunden sendte et bilde, men vi klarte ikke å lese verken 43R-merke eller kjennemerke (${lest.raatekst.slice(0, 80)}). Spør kunden om varenummer/eurokode eller biltype.`;
+          imageContext = `Kunden sendte et bilde, men vi klarte ikke å lese verken 43R-merke eller kjennemerke (${lest.raatekst.slice(0, 80) || lest.feil || 'ukjent'}). Spør kunden om varenummer/eurokode eller biltype.`;
         }
         await addMessage(env, sessionToken, 'user', `[BILDE] ${imageContext}`);
       } catch (e) {
@@ -1213,6 +1213,7 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
       next_action: nextAction || undefined,
       proactive_suggestions: proactiveSuggestions,
       tool_results: toolResults,
+      ...(imageContext ? { debug_bilde: imageContext.slice(0, 300) } : {}),
     };
 
     return jsonResponse(response);

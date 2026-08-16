@@ -74,6 +74,8 @@ interface DialogueContext {
   extracted: Record<string, string>;
   vehicle: { make: string; model: string; year: number } | null;
   ktypeFamily?: KtypeFamilyInfo | null;
+  /** Bilde-kontekst fra kundens foto (43R-merkelesing / kjennemerke) — injiseres i user-promt. */
+  imageContext?: string | null;
 }
 
 const DIALOGUE_SCHEMA = {
@@ -229,7 +231,10 @@ ${candidateDescriptions || 'Ingen kandidater funnet ennå'}
 ALLEREDE KJENT: ${knownFields}
 
 KJØRETØY: ${context.vehicle ? `${context.vehicle.make} ${context.vehicle.model} (${context.vehicle.year})` : 'Ukjent'}${ktypeFamilyNote}
-
+${context.imageContext ? `KUNDEN SENDTE ET BILDE (FYSISK BEVIS):
+${context.imageContext}
+Bruk dette som FAKTA i dialogen: bekreft glasset/bilen med kunden, og trekk ut det du trenger (position, utstyr) — ikke spør om noe bildet allerede svarer på.
+` : ''}
 SAMTALEHISTORIKK (siste 6 meldinger):
 ${historyText}${zeroCandidatesNote}
 

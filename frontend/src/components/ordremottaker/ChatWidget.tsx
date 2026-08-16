@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Loader2, RotateCcw, Check, XCircle, HelpCircle } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, RotateCcw, Check, XCircle, HelpCircle, Camera } from 'lucide-react';
 import { useOrdremottaker } from '@/hooks/useOrdremottaker';
 import { useChatStore } from '@/stores/chatStore';
 import ChatMessage from './ChatMessage';
@@ -59,6 +59,8 @@ const MVP_CUSTOMER_ID = 1;
 export default function ChatWidget() {
   const { isOpen, initialMessage, initialRegnr, openChat, closeChat, clearInitial } = useChatStore();
   const [input, setInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sendingImage, setSendingImage] = useState(false);
   const [feedbackState, setFeedbackState] = useState<'idle' | 'wrong' | 'submitted'>('idle');
   const [correctEurocode, setCorrectEurocode] = useState('');
   const [otherPosition, setOtherPosition] = useState('');
@@ -169,6 +171,23 @@ export default function ChatWidget() {
     if (!text || isLoading) return;
     setInput('');
     sendUserMessage(text, MVP_CUSTOMER_ID);
+  };
+
+  // Foto av 43R-merke eller kjennemerke → sendes som dataURL (bildet lagres aldri server-side).
+  const handleImageSend = (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setInput('Bildet er over 5 MB — ta et nytt bilde med mobilen.');
+      return;
+    }
+    const leser = new FileReader();
+    setSendingImage(true);
+    leser.onload = () => {
+      setSendingImage(false);
+      sendUserMessage('Jeg sender et bilde av glasset', MVP_CUSTOMER_ID, String(leser.result));
+    };
+    leser.onerror = () => setSendingImage(false);
+    leser.readAsDataURL(file);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -638,22 +657,47 @@ export default function ChatWidget() {
 
           {/* Input */}
           <div className="flex items-center gap-2 border-t border-gray-100 px-4 py-4 md:px-3 md:py-3 shrink-0">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || sendingImage}
+              title="Send bilde av 43R-merket på glasset eller kjennemerket"
+              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-autoglass-blue hover:text-autoglass-blue hover:bg-autoglass-light disabled:opacity-40 shrink-0"
+              aria-label="Send bilde av glasset eller kjennemerket"
+            >
+              <Camera className="h-5 w-5 md:h-4 md:w-4" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f) handleImageSend(f);
+              }}
+            />
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Skriv en melding..."
+              placeholder={sendingImage ? 'Leser bildet…' : 'Skriv en melding…'}
               className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 md:px-3 md:py-2 text-base md:text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-autoglass-blue focus:ring-1 focus:ring-autoglass-blue min-h-[44px]"
-              disabled={isLoading}
+              disabled={isLoading || sendingImage}
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || isLoading}
+              disabled={(!input.trim() && !sendingImage) || isLoading}
               className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-lg bg-autoglass-blue text-white transition-colors hover:bg-autoglass-dark disabled:opacity-40 shrink-0"
               aria-label="Send"
             >
-              <Send className="h-5 w-5 md:h-4 md:w-4" />
+              {isLoading || sendingImage ? (
+                <Loader2 className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5 md:h-4 md:w-4" />
+              )}
             </button>
           </div>
         </div>

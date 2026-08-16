@@ -18,6 +18,7 @@ import { handleVinLookup, handleVinLookupStatus } from "./handlers/vin";
 import { handleHealth } from "./handlers/health";
 import { handleVehicleKtypeLookup, handleVehicleBrands, handleVehicleModels, handleVehicleYears, handleVehicleProducts, handleVehicleDebug, handleVehicleEquipmentProfile } from "./handlers/vehicle";
 import { handleGlassGuide } from "./handlers/glass-guide";
+import { handleVerifyGlass } from "./handlers/verify-glass";
 import { handleOrdremottaker, handleFeedback as handleOrdremottakerFeedback } from "./handlers/ordremottaker";
 import { handleUnifiedSearch } from "./handlers/unified-search";
 import { handleBuildKtypeMapping } from "./handlers/build-ktype-mapping";
@@ -229,6 +230,11 @@ export default {
     // Glass Guide (AI glassvelger)
     if (path === "/api/glass-guide" && request.method === "POST") {
       return handleGlassGuide(request, env);
+    }
+
+    // ECE R43-verifisering (bilde/manuell avlesning av godkjenningsmerket)
+    if (path === "/api/verify-glass" && request.method === "POST") {
+      return handleVerifyGlass(request, env);
     }
 
     // Catalog metadata

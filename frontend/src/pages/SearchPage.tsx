@@ -31,6 +31,9 @@ const IdentifierResults = lazy(() =>
 const CatalogResults = lazy(() =>
   import('@/components/search/results/CatalogResults').then((m) => ({ default: m.CatalogResults }))
 );
+const VerifyR43 = lazy(() =>
+  import('@/components/search/VerifyR43').then((m) => ({ default: m.VerifyR43 }))
+);
 const VehicleWizard = lazy(() => import('@/components/search/VehicleWizard').then((m) => ({ default: m.VehicleWizard })));
 const ProductDetail = lazy(() => import('@/components/catalog/ProductDetail').then((m) => ({ default: m.ProductDetail })));
 
@@ -296,6 +299,11 @@ export default function SearchPage() {
             <ProfessorSearchIcon className="h-7 w-7 text-gray-600 group-hover:text-gray-800 transition" />
             <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900">Professor</span>
           </button>
+        </div>
+
+        {/* ECE R43-verifisering (foto av godkjenningsmerket) */}
+        <div className="mb-6 sm:mb-8">
+          <VerifyR43 />
         </div>
 
         {/* ═══════════════════════════════════════════════════════════

@@ -1,0 +1,27 @@
+name: AI License Accept
+# Engangs-job (workflow_dispatch): aksepterer Meta Community License for
+# llama-3.2-11b-vision-instruct på CF-kontoen (feil 5016).
+# Mekanisme (offisiell docs): POST /accounts/{id}/ai/run/@cf/meta/llama-3.2-11b-vision-instruct
+# med {"prompt":"agree"} og Bearer-token.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  accept-license:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Accept Meta Community License (prompt=agree)
+        run: |
+          RESP=$(curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/ai/run/@cf/meta/llama-3.2-11b-vision-instruct" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{ "prompt": "agree" }')
+          echo "$RESP" | head -c 400
+          echo ""
+          if echo "$RESP" | grep -q '"success":true'; then
+            echo "✅ Lisens akseptert"
+          else
+            echo "⚠️ Sjekk svaret — lisensen kan allerede være akseptert, eller tokenet mangler Workers AI-tilgang"
+          fi

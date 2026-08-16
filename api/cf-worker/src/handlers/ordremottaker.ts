@@ -964,7 +964,11 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
 
     // ── D: Build response — Dual flow: LLM Dialogue Engine (primary) or rigid fallback ──
     let useLlmDialogue = false;
-    if (!useToolCalling) {
+    // Bilde fra kunden (43R-merke/kjennemerke) er FYSISK BEVIS — LLM må svare med
+    // imageContext i prompten (bekrefte glasset/bilen), uansett tool-calling/rigid-gating.
+    if (imageContext) {
+      useLlmDialogue = true;
+    } else if (!useToolCalling) {
 
     // If user explicitly chose "Annet", we need more info — don't try to match
     if (pos === 'annet') {
@@ -978,10 +982,7 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
       // We have accumulated answers from previous turns (LLM dialogue in progress)
       // Continue with LLM even if candidates filtered to 0 — LLM can explain no matches
       useLlmDialogue = true;
-    } else if (imageContext) {
-      // Bilde fra kunden (43R-merke/kjennemerke) er FYSISK BEVIS — LLM må svare med
-      // imageContext i prompten (bekrefte glasset/bilen), selv uten kandidater ennå.
-      useLlmDialogue = true;
+    }
     }
 
     if (useLlmDialogue) {
@@ -1126,7 +1127,6 @@ export async function handleOrdremottaker(request: Request, env: Env, ctx: Execu
         status = 'clarification';
         nextAction = 'ask_vehicle_details';
       }
-    }
     }
 
     // Build position-based accessories. Recompute after LLM/rigid flow because

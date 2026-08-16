@@ -9,6 +9,7 @@ interface VerifyTreff {
   landkode: string;
   eurokode: string | null;
   varenr: string | null;
+  kategori?: string | null;
   merke: string | null;
   modell: string | null;
   kilde: string;
@@ -17,6 +18,15 @@ interface VerifyTreff {
   pris?: number | null;
   article_number?: string | null;
 }
+
+const KATEGORI_LABEL: Record<string, string> = {
+  frontrute: 'Frontrute',
+  bakrute: 'Bakrute',
+  siderute: 'Siderute',
+  'dørrute-frem': 'Dørrute frem',
+  'dørrute-bak': 'Dørrute bak',
+  annet: 'Annet glass',
+};
 
 interface VerifyResponse {
   ok: boolean;
@@ -154,9 +164,9 @@ export function VerifyR43() {
       {open && (
         <div className="px-4 pb-4 border-t border-gray-100 pt-3">
           <div className="text-xs text-gray-500 mb-3 leading-relaxed">
-            Merket sitter i nederkant av frontruten, oftest i førerens hjørne: en sirkel med <b>E1</b> og et nummer som{' '}
-            <span className="font-mono">43R-004592</span>. Tørk av glasset utenpå, legg et hvitt ark inni mot merket og ta
-            bildet fra utsiden.
+            Merket sitter i et hjørne av glasset — på frontruten oftest nederst i førerens hjørne, på side- og bakruter i
+            kanten: en sirkel med <b>E1</b> og et nummer som <span className="font-mono">43R-004592</span>. Tørk av glasset
+            utenpå, legg et hvitt ark inni mot merket og ta bildet fra utsiden.
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 mb-3">
@@ -239,9 +249,9 @@ export function VerifyR43() {
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{t.varenavn || t.varenr || t.eurokode}</p>
                           {t.eurokode && <p className="text-xs text-gray-500 font-mono mt-0.5">{t.eurokode}</p>}
-                          {(t.merke || t.modell) && (
+                          {(t.merke || t.modell || t.kategori) && (
                             <p className="text-xs text-gray-500 mt-0.5">
-                              {[t.merke, t.modell].filter(Boolean).join(' ')}
+                              {[KATEGORI_LABEL[t.kategori ?? ''] ?? null, t.merke, t.modell].filter(Boolean).join(' · ')}
                             </p>
                           )}
                           {t.bekreftet === 1 && (

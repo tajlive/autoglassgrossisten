@@ -9,13 +9,15 @@
 -- og produsentkataloger. r43_nummer = kun sifrene (normalisert, f.eks. 004592).
 -- ===========================================================================
 
--- Mapping: 43R-nummer → glass.
+-- Mapping: 43R-nummer → glass. Gjelder ALLE glass (front-, side-, bak- og
+-- dørruter) — 43R-merket sitter i et hjørne på hvert sikkerhetsglass.
 CREATE TABLE IF NOT EXISTS ece_r43 (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   r43_nummer TEXT NOT NULL,          -- normalisert: kun sifrene (004592)
   landkode TEXT NOT NULL DEFAULT 'E1', -- E1=Tyskland, E2=Frankrike, E4=Nederland…
   eurokode TEXT,                     -- kobling mot glass_catalog.eurocode
   varenr TEXT,                       -- supplier_sku i glass_catalog
+  kategori TEXT NOT NULL DEFAULT 'frontrute', -- frontrute|siderute|bakrute|dørrute|annet
   merke TEXT,
   modell TEXT,
   kilde TEXT NOT NULL DEFAULT 'manual', -- manual|varekort|scrape|customer

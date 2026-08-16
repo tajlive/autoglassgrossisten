@@ -95,7 +95,7 @@ export async function handleVerifyGlass(request: Request, env: Env): Promise<Res
     let treff: Array<Record<string, unknown>> = [];
     if (r43Norm) {
       const { results } = await env.GLASS_CATALOG_D1.prepare(
-        `SELECT r43_nummer, landkode, eurokode, varenr, merke, modell, kilde, bekreftet
+        `SELECT r43_nummer, landkode, eurokode, varenr, kategori, merke, modell, kilde, bekreftet
          FROM ece_r43 WHERE r43_nummer = ? ORDER BY bekreftet DESC, id ASC LIMIT 20`
       )
         .bind(r43Norm)

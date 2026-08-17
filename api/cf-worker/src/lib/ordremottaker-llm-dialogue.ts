@@ -260,14 +260,9 @@ async function callDialogueLlm(
       messages,
       max_tokens: 512,
       temperature: 0.3,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "dialogue_response",
-          schema: DIALOGUE_SCHEMA,
-          strict: true,
-        },
-      },
+      // Ingen response_format: @cf/meta/llama-3.3-70b-instruct-fp8-fast HENGER på json_schema
+      // (verifisert 2026-08-17 — timeout). System-prompten instruerer JSON; stripJson nedenfor
+      // trekker ut objektet også fra tekst-svar.
     });
 
     const response = result.response;
@@ -277,7 +272,9 @@ async function callDialogueLlm(
     }
 
     try {
-      const parsed = JSON.parse(response) as LlmDialogueResponse;
+      // Modellen kan legge tekst rundt JSON — klipp ut første komplett JSON-objekt.
+      const m = response.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(m ? m[0] : response) as LlmDialogueResponse;
       const validActions = ['ask_question', 'extract_info', 'show_results', 'clarify', 'confirm'];
       if (!validActions.includes(parsed.action)) {
         console.warn(`[DialogueEngine] Invalid action: ${parsed.action}, defaulting to clarify`);

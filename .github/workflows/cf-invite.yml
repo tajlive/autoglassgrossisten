@@ -1,0 +1,38 @@
+name: CF Add Member (tomarnejensen@gmail.com)
+# Prøver å legge til tomarnejensen@gmail.com som Super Administrator på kontoen.
+# Krever Account > Memberships > Edit på tokenet. Hvis 403 → Tom inviterer i dashbordet.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  invite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finn Super Administrator-rolle-id
+        id: roles
+        shell: bash
+        run: |
+          ROLES=$(curl -s "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/roles?per_page=50" -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
+          echo "ROLES_RESP: $(echo "$ROLES" | head -c 300)"
+          echo "$ROLES" > /tmp/roles.json
+          ID=$(python3 -c "import json; d=json.load(open('/tmp/roles.json')); print(next((r.get('id') for r in d.get('result', []) if r.get('name') == 'Super Administrator'), ''))")
+          echo "SUPER_ADMIN_ROLE=$ID"
+          echo "role_id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Inviter tomarnejensen@gmail.com som Super Administrator
+        shell: bash
+        run: |
+          ROLE_ID="${{ steps.roles.outputs.role_id }}"
+          if [ -z "$ROLE_ID" ]; then
+            echo "WARN: Fant ikke Super Administrator-rolle — tokenet kan mangle Members-innsyn"
+            exit 0
+          fi
+          RESP=$(curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/members" -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" -H "Content-Type: application/json" -d "{\"email\":\"tomarnejensen@gmail.com\",\"roles\":[{\"id\":\"$ROLE_ID\"}]}")
+          echo "$RESP" | head -c 600
+          echo ""
+          if echo "$RESP" | grep -q '"success":true'; then
+            echo "OK: Invitasjon sendt til tomarnejensen@gmail.com — Tom må godta i e-posten"
+          else
+            echo "WARN: Invitasjon feilet — tokenet mangler sannsynligvis Members-permission"
+          fi

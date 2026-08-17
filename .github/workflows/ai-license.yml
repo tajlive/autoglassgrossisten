@@ -11,6 +11,20 @@ jobs:
   accept-license:
     runs-on: ubuntu-latest
     steps:
+      - name: Diagnostikk — hvilke kontoer ser tokenet?
+        run: |
+          echo "### accounts:"
+          curl -s "https://api.cloudflare.com/client/v4/accounts?per_page=5" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | head -c 600
+          echo ""
+          echo "### memberships:"
+          curl -s "https://api.cloudflare.com/client/v4/memberships" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | head -c 600
+          echo ""
+          echo "### token verify:"
+          curl -s "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | head -c 400
+
       - name: Accept Meta Community License (prompt=agree)
         run: |
           RESP=$(curl -s -X POST \

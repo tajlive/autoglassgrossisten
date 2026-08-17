@@ -273,8 +273,8 @@ async function callDialogueLlm(
 
     try {
       // Modellen kan legge tekst rundt JSON — klipp ut første komplett JSON-objekt.
-      const m = response.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(m ? m[0] : response) as LlmDialogueResponse;
+      const m = typeof response === "string" ? response.match(/\{[\s\S]*\}/) : null;
+      const parsed = JSON.parse(m ? m[0] : String(response)) as LlmDialogueResponse;
       const validActions = ['ask_question', 'extract_info', 'show_results', 'clarify', 'confirm'];
       if (!validActions.includes(parsed.action)) {
         console.warn(`[DialogueEngine] Invalid action: ${parsed.action}, defaulting to clarify`);

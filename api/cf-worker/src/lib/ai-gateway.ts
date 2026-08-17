@@ -76,11 +76,13 @@ async function callWorkersAI(
 
   // Nyere modeller (llama-3.3-70b-fp8-fast) svarer i OpenAI-format:
   // choices[0].message.content — eldre i Workers AI-format: .response.
+  // Bindingen kan også wrappe svaret i {response: {...}} — garanter en string.
   const r = result as {
-    response?: string;
+    response?: unknown;
     choices?: Array<{ message?: { content?: string } }>;
   };
-  const response = r.response || r.choices?.[0]?.message?.content || "";
+  const raw = r.response ?? r.choices?.[0]?.message?.content ?? "";
+  const response = typeof raw === "string" ? raw : raw ? JSON.stringify(raw) : "";
   if (!response) {
     throw new Error("Empty response from Workers AI");
   }

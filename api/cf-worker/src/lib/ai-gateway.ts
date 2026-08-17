@@ -39,7 +39,7 @@ export interface LlmCallResult {
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
-const WORKERS_AI_MODEL = "@cf/moonshotai/moonshot-auto";
+const WORKERS_AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
 /** Detect if error is quota/rate-limit related */
 function isQuotaError(error: unknown): boolean {

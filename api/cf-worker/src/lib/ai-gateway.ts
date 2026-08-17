@@ -74,7 +74,13 @@ async function callWorkersAI(
     response_format: options.response_format,
   });
 
-  const response = (result as { response?: string }).response || "";
+  // Nyere modeller (llama-3.3-70b-fp8-fast) svarer i OpenAI-format:
+  // choices[0].message.content — eldre i Workers AI-format: .response.
+  const r = result as {
+    response?: string;
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const response = r.response || r.choices?.[0]?.message?.content || "";
   if (!response) {
     throw new Error("Empty response from Workers AI");
   }

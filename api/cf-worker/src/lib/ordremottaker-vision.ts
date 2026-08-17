@@ -26,14 +26,14 @@ export interface BildeKontekst {
 /** AI-prompt: be om BÅDE 43R-nummer og kjennemerke (én avlesning per bilde). */
 function visionPrompt(): string {
   return JSON.stringify({
-    task: 'Read the vehicle glass approval marking AND the license plate in this image, if visible.',
+    task: 'Read this customer photo. It shows EITHER a windshield approval marking (43R) OR a Norwegian license plate — read exactly what is visible.',
     instructions: [
-      'The approval marking looks like "43R-004592" (a circle with E1 or similar, then 43R followed by 4-7 digits).',
-      'The license plate has 2 letters and 5 digits, e.g. SU18018.',
+      'A 43R approval marking looks like "43R-004592" (circle with E1/E2/..., then 43R followed by 4-7 digits). It is etched on the glass, usually near a corner.',
+      'A Norwegian license plate has 2 letters and 5 digits, e.g. SU18018, on a white plate with a blue EU stripe.',
       'Respond with ONLY the found values, one per line, e.g.:',
       '43R:004592',
       'PLATE:SU18018',
-      'Write 43R: or PLATE: only for values you actually see. If nothing is visible, respond with exactly: NONE',
+      'NEVER invent numbers. If the photo shows a license plate, return ONLY PLATE: — do NOT invent a 43R value. If the photo shows a 43R marking, return ONLY 43R:. If nothing is clearly visible, respond with exactly: NONE',
     ],
   });
 }
